@@ -26,6 +26,7 @@ import { sp } from '@pnp/sp';
 import sortBy from "lodash/sortBy";
 import find from "lodash/find";
 import cloneDeep from "lodash/cloneDeep";
+import { escape } from '@microsoft/sp-lodash-subset';
 
 import { Logger, LogLevel, ConsoleListener } from "@pnp/logging";
 import { UrlQueryParameterCollection } from '@microsoft/sp-core-library';
@@ -180,9 +181,11 @@ export default class CustomLearningWebPart extends BaseClientSideWebPart<ICustom
     try {
       let currentCdn = this._urlCDN;
       if (!currentCdn || currentCdn.length < 1) {
-        if (!this.properties.defaultCDN || this.properties.defaultCDN === "")
-          this.properties.defaultCDN = "Default";
-        currentCdn = this.properties.defaultCDN;
+        let defaultCDN = escape(this.properties.defaultCDN);
+        if (!defaultCDN || defaultCDN === "") 
+          defaultCDN = this.properties.defaultCDN = "Default";
+
+        currentCdn = defaultCDN;
       }
 
       await this.configCDN(currentCdn);
@@ -234,27 +237,35 @@ export default class CustomLearningWebPart extends BaseClientSideWebPart<ICustom
     let element;
 
     //Update startType and startLocation if changed.
-    if (this.properties.webpartMode !== "" && this.properties.webpartMode !== this._webpartMode) {
-      this._webpartMode = this.properties.webpartMode;
+    const webpartMode = escape(this.properties.webpartMode);
+    if (webpartMode !== "" && webpartMode !== this._webpartMode) {
+      this._webpartMode = webpartMode;
     }
 
-    if (this.properties.defaultCategory !== "" && this.properties.defaultCategory !== this._startLocation) {
+    const defaultCategory = escape(this.properties.defaultCategory);
+    if (defaultCategory !== "" && defaultCategory !== this._startLocation) {
       this._startType = Templates.Category;
-      this._startLocation = this.properties.defaultCategory;
+      this._startLocation = defaultCategory;
     }
 
-    if (this.properties.defaultSubCategory !== "" && this.properties.defaultSubCategory !== this._startLocation) {
+    const defaultSubCategory = escape(this.properties.defaultSubCategory);
+    if (defaultSubCategory !== "" && defaultSubCategory !== this._startLocation) {
       this._startType = Templates.SubCategory;
-      this._startLocation = this.properties.defaultSubCategory;
+      this._startLocation = defaultSubCategory;
     }
-    if (this.properties.defaultPlaylist !== "" && this.properties.defaultPlaylist !== this._startLocation) {
+
+    const defaultPlaylist = escape(this.properties.defaultPlaylist);
+    if (defaultPlaylist !== "" && defaultPlaylist !== this._startLocation) {
       this._startType = Templates.Playlist;
-      this._startLocation = this.properties.defaultPlaylist;
+      this._startLocation = defaultPlaylist;
     }
-    if (this.properties.defaultAsset !== "" && this.properties.defaultAsset !== this._startAsset) {
-      this._startAsset = this.properties.defaultAsset;
+
+    const defaultAsset = escape(this.properties.defaultAsset);
+    if (defaultAsset !== "" && defaultAsset !== this._startAsset) {
+      this._startAsset = defaultAsset;
     }
-    if (this.properties.defaultCategory === "" && this.properties.defaultSubCategory === "" && this.properties.defaultPlaylist === "") {
+    
+    if (defaultCategory === "" && defaultSubCategory === "" && defaultPlaylist === "") {
       this._startType = "";
       this._startLocation = "";
     }
@@ -322,11 +333,11 @@ export default class CustomLearningWebPart extends BaseClientSideWebPart<ICustom
         //Render web part
         const props: ICustomLearningProps = {
           editMode: (this.displayMode === DisplayMode.Edit),
-          webpartMode: this.properties.webpartMode,
+          webpartMode: escape(this.properties.webpartMode),
           startType: this._startType,
           startLocation: this._startLocation,
           startAsset: this._startAsset,
-          webpartTitle: this.properties.title,
+          webpartTitle: escape(this.properties.title),
           customSort: this.properties.customSort ? this.properties.customSort : false,
           customSortOrder: this.properties.customSortOrder,
           teamsEntityId: this.context.sdks.microsoftTeams?.context?.entityId,
@@ -574,7 +585,7 @@ export default class CustomLearningWebPart extends BaseClientSideWebPart<ICustom
                   PropertyPaneDropdown('defaultCDN', {
                     label: strings.DefaultCDNLabel,
                     options: this._ppDefaultCDN,
-                    selectedKey: this.properties.defaultCDN
+                    selectedKey: escape(this.properties.defaultCDN)
                   }),
                   PropertyPaneTextField('title', {
                     label: strings.WebpartTitleLabel,
@@ -582,7 +593,7 @@ export default class CustomLearningWebPart extends BaseClientSideWebPart<ICustom
                   PropertyPaneDropdown('webpartMode', {
                     label: strings.WebpartModeLabel,
                     options: this._ppWebpartMode,
-                    selectedKey: this.properties.webpartMode
+                    selectedKey: escape(this.properties.webpartMode)
                   })
                 ]
               }
@@ -594,38 +605,39 @@ export default class CustomLearningWebPart extends BaseClientSideWebPart<ICustom
       defaultFilter = PropertyPaneDropdown('defaultFilter', {
         label: strings.DefaultFilterLabel,
         options: this._ppFilters,
-        selectedKey: this.properties.defaultFilter
+        selectedKey: escape(this.properties.defaultFilter)
       });
       assetList = PropertyPaneLabel('defaultAsset', { text: "" });
 
-      switch (this.properties.defaultFilter) {
+      switch (escape(this.properties.defaultFilter)) {
         case PropertyPaneFilters.category:
           displayFilter = PropertyPaneDropdown('defaultCategory', {
             label: strings.DefaultCategoryLabel,
             options: this._ppCategory,
-            selectedKey: this.properties.defaultCategory
+            selectedKey: escape(this.properties.defaultCategory)
           });
           break;
         case PropertyPaneFilters.subcategory:
           displayFilter = PropertyPaneDropdown('defaultSubCategory', {
             label: strings.DefaultSubCategoryLabel,
             options: this._ppSubCategory,
-            selectedKey: this.properties.defaultSubCategory
+            selectedKey: escape(this.properties.defaultSubCategory)
           });
           break;
         case PropertyPaneFilters.playlist:
-          if (this.properties.defaultPlaylist && this.properties.defaultPlaylist != "") {
-            this.loadPlayListAssets(this.properties.defaultPlaylist);
+          const defaultPlaylist = escape(this.properties.defaultPlaylist);
+          if (defaultPlaylist && defaultPlaylist != "") {
+            this.loadPlayListAssets(defaultPlaylist);
           }
           displayFilter = PropertyPaneDropdown('defaultPlaylist', {
             label: strings.DefaultPlaylistLabel,
             options: this._ppPlaylist,
-            selectedKey: this.properties.defaultPlaylist
+            selectedKey: defaultPlaylist
           });
           assetList = PropertyPaneDropdown('defaultAsset', {
             label: strings.DefaultAssetLabel,
             options: this._ppAssets,
-            selectedKey: this.properties.defaultAsset
+            selectedKey: escape(this.properties.defaultAsset)
           });
           break;
         default:
@@ -635,7 +647,7 @@ export default class CustomLearningWebPart extends BaseClientSideWebPart<ICustom
       configuration.pages[0].groups[0]["groupFields"].push(defaultFilter);
       configuration.pages[0].groups[0]["groupFields"].push(displayFilter);
       configuration.pages[0].groups[0]["groupFields"].push(assetList);
-      if (this.properties.defaultFilter.length > 0 && (this.properties.defaultCategory.length > 0 || this.properties.defaultSubCategory.length > 0)) {
+      if (escape(this.properties.defaultFilter).length > 0 && (escape(this.properties.defaultCategory).length > 0 || escape(this.properties.defaultSubCategory).length > 0)) {
         configuration.pages[0].groups[0]["groupFields"].push(PropertyPaneToggle("customSort", {
           label: strings.CustomizeSort
         })

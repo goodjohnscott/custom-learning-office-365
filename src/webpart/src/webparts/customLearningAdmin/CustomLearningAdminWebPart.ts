@@ -14,6 +14,8 @@ import cloneDeep from "lodash/cloneDeep";
 import findIndex from "lodash/findIndex";
 import remove from "lodash/remove";
 import forEach from "lodash/forEach";
+
+import { escape } from '@microsoft/sp-lodash-subset';
 import { Version, UrlQueryParameterCollection } from '@microsoft/sp-core-library';
 import { BaseClientSideWebPart } from "@microsoft/sp-webpart-base";
 import { Logger, ConsoleListener, LogLevel } from '@pnp/logging';
